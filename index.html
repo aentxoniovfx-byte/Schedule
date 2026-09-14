@@ -1650,27 +1650,6 @@ body.duplicate-mode .slot:hover{
 /* =========================================================
    ADMIN MODE — default user view is read-only
 ========================================================= */
-.admin-toggle{min-width:74px}
-.admin-toggle.is-admin{
-  background:linear-gradient(145deg,#22C55E,#16A34A) !important;
-  border-color:transparent !important;
-  color:#fff !important;
-  box-shadow:0 5px 16px rgba(34,197,94,.25) !important;
-}
-.admin-kicker{
-  color:var(--blue);
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.09em;
-  margin-bottom:5px;
-}
-.admin-error{
-  min-height:18px;
-  margin-top:8px;
-  color:#EF4444;
-  font-size:11px;
-  font-weight:700;
-}
 body:not(.admin-mode) .admin-only{display:none !important}
 body:not(.admin-mode) .slot.slot-empty .cell-add-plus{display:none !important}
 body:not(.admin-mode) .slot.slot-empty{cursor:default}
@@ -1746,8 +1725,7 @@ body.admin-mode #closeReadonlyShift{display:none !important}
     </div>
 
     <div class="top-actions">
-      <button id="adminToggle" class="small-button admin-toggle" type="button">Admin</button>
-    <button id="themeToggle" class="small-button" type="button" aria-label="Toggle theme">
+      <button id="themeToggle" class="small-button" type="button" aria-label="Toggle theme">
         <span id="themeIcon">☀️</span>
       </button>
     </div>
@@ -1843,42 +1821,6 @@ body.admin-mode #closeReadonlyShift{display:none !important}
 <div id="saveToast" class="save-toast" role="status" aria-live="polite">Saved locally ✓</div>
 
 
-<div id="adminModal" class="modal">
-  <div class="modal-box admin-modal-box">
-    <div id="adminSetupView">
-      <div class="admin-kicker">ADMIN SETUP</div>
-      <h2>Create Admin PIN</h2>
-      <div class="modal-sub">Create a 4–8 digit PIN for editing access on this device.</div>
-      <div class="field">
-        <label>PIN</label>
-        <input id="adminPinSetup" type="password" inputmode="numeric" maxlength="8" placeholder="4–8 digits">
-      </div>
-      <div class="field" style="margin-top:10px">
-        <label>Confirm PIN</label>
-        <input id="adminPinConfirm" type="password" inputmode="numeric" maxlength="8" placeholder="Repeat PIN">
-      </div>
-      <div class="modal-actions">
-        <button id="cancelAdminSetup" type="button">Cancel</button>
-        <button id="saveAdminPin" class="save" type="button">Save PIN</button>
-      </div>
-    </div>
-
-    <div id="adminLoginView" style="display:none">
-      <div class="admin-kicker">ADMIN ACCESS</div>
-      <h2>Enter Admin PIN</h2>
-      <div class="modal-sub">Editing tools are locked in user mode.</div>
-      <div class="field">
-        <label>PIN</label>
-        <input id="adminPinLogin" type="password" inputmode="numeric" maxlength="8" placeholder="Enter PIN">
-      </div>
-      <div id="adminLoginError" class="admin-error"></div>
-      <div class="modal-actions">
-        <button id="cancelAdminLogin" type="button">Cancel</button>
-        <button id="loginAdmin" class="save" type="button">Unlock</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div id="editModal" class="modal">
   <div class="modal-box">
@@ -1991,7 +1933,34 @@ body.admin-mode #closeReadonlyShift{display:none !important}
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyAe0TDryz5mgFNgtYrnBOetU5Mi-KZxyBg",
+  authDomain:"paramed-daily-operations.firebaseapp.com",
+  projectId:"paramed-daily-operations",
+  storageBucket:"paramed-daily-operations.firebasestorage.app",
+  messagingSenderId:"47189670335",
+  appId:"1:47189670335:web:2b5cfc1cb56ab3f8fc090a"
+};
+
+const firebaseApp=initializeApp(firebaseConfig);
+const auth=getAuth(firebaseApp);
+
+setPersistence(auth,browserLocalPersistence).catch(error=>{
+  console.error("Auth persistence error:",error);
+});
+
 const DEFAULT_AREAS = {
   "CWMH": [
     {name:"Deka Ahmednuur", role:""},
@@ -3113,29 +3082,10 @@ if(duplicateShiftButton){
 }
 
 
-const ADMIN_PIN_KEY="paramedSchedulerAdminPinHash";
-const ADMIN_SESSION_KEY="paramedSchedulerAdminSession";
-let isAdminMode=sessionStorage.getItem(ADMIN_SESSION_KEY)==="1";
-
-async function hashAdminPin(pin){
-  if(window.crypto?.subtle){
-    const bytes=new TextEncoder().encode(pin);
-    const digest=await crypto.subtle.digest("SHA-256",bytes);
-    return Array.from(new Uint8Array(digest))
-      .map(b=>b.toString(16).padStart(2,"0"))
-      .join("");
-  }
-  let hash=0;
-  for(let i=0;i<pin.length;i++) hash=((hash<<5)-hash)+pin.charCodeAt(i)|0;
-  return `fallback-${hash}`;
-}
+let isAdminMode=false;
 
 function applyAdminMode(){
   document.body.classList.toggle("admin-mode",isAdminMode);
-  const button=$("#adminToggle");
-  button.classList.toggle("is-admin",isAdminMode);
-  button.textContent=isAdminMode ? "Admin ON" : "Admin";
-  button.title=isAdminMode ? "Exit Admin mode" : "Enter Admin mode";
 
   if(!isAdminMode){
     duplicateSource=null;
@@ -3147,68 +3097,17 @@ function applyAdminMode(){
   updateHistoryButtons();
 }
 
-function openAdminAccess(){
-  const hasPin=!!localStorage.getItem(ADMIN_PIN_KEY);
-  $("#adminSetupView").style.display=hasPin?"none":"block";
-  $("#adminLoginView").style.display=hasPin?"block":"none";
-  $("#adminLoginError").textContent="";
-  $("#adminPinSetup").value="";
-  $("#adminPinConfirm").value="";
-  $("#adminPinLogin").value="";
-  $("#adminModal").classList.add("show");
-  setTimeout(()=>$(hasPin?"#adminPinLogin":"#adminPinSetup").focus(),30);
-}
-function closeAdminAccess(){$("#adminModal").classList.remove("show")}
+/*
+  Scheduling does not have its own login.
+  It trusts the same Firebase Authentication session used by Operations.
 
-$("#adminToggle").onclick=()=>{
-  if(isAdminMode){
-    isAdminMode=false;
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    applyAdminMode();
-    showSaveToast("Admin mode off");
-  }else{
-    openAdminAccess();
-  }
-};
-
-$("#cancelAdminSetup").onclick=closeAdminAccess;
-$("#cancelAdminLogin").onclick=closeAdminAccess;
-
-$("#saveAdminPin").onclick=async()=>{
-  const pin=$("#adminPinSetup").value.trim();
-  const confirmPin=$("#adminPinConfirm").value.trim();
-  if(!/^\d{4,8}$/.test(pin)){
-    alert("PIN must be 4–8 digits.");
-    return;
-  }
-  if(pin!==confirmPin){
-    alert("PINs do not match.");
-    return;
-  }
-
-  localStorage.setItem(ADMIN_PIN_KEY,await hashAdminPin(pin));
-  isAdminMode=true;
-  sessionStorage.setItem(ADMIN_SESSION_KEY,"1");
-  closeAdminAccess();
+  Authenticated in Operations -> editable Admin Mode.
+  No authenticated session -> read-only user mode.
+*/
+onAuthStateChanged(auth,user=>{
+  isAdminMode=!!user;
   applyAdminMode();
-  showSaveToast("Admin mode on ✓");
-};
-
-async function loginAdmin(){
-  const stored=localStorage.getItem(ADMIN_PIN_KEY);
-  const entered=await hashAdminPin($("#adminPinLogin").value.trim());
-  if(!stored || stored!==entered){
-    $("#adminLoginError").textContent="Incorrect PIN.";
-    return;
-  }
-  isAdminMode=true;
-  sessionStorage.setItem(ADMIN_SESSION_KEY,"1");
-  closeAdminAccess();
-  applyAdminMode();
-  showSaveToast("Admin mode on ✓");
-}
-$("#loginAdmin").onclick=loginAdmin;
-$("#adminPinLogin").addEventListener("keydown",e=>{if(e.key==="Enter") loginAdmin();});
+});
 
 const OPS_THEME_KEY="paramedWeeklyTheme";
 function applyOpsTheme(theme){
@@ -3226,7 +3125,6 @@ initSample();
 lastSavedSnapshot=createScheduleSnapshot();
 updateHistoryButtons();
 render();
-applyAdminMode();
 
 function syncSemanticStatusUI(){
   document.querySelectorAll(".open-card").forEach(card=>{
