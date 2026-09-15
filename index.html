@@ -1945,6 +1945,16 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
 const firebaseConfig = {
   apiKey:"AIzaSyAe0TDryz5mgFNgtYrnBOetU5Mi-KZxyBg",
   authDomain:"paramed-daily-operations.firebaseapp.com",
@@ -1956,6 +1966,8 @@ const firebaseConfig = {
 
 const firebaseApp=initializeApp(firebaseConfig);
 const auth=getAuth(firebaseApp);
+const db=getFirestore(firebaseApp);
+const SHARED_SCHEDULE_REF=doc(db,"scheduling","shared");
 
 setPersistence(auth,browserLocalPersistence).catch(error=>{
   console.error("Auth persistence error:",error);
@@ -2072,11 +2084,66 @@ function createScheduleSnapshot(){
   });
 }
 
-function persistSchedule(){
+function persistLocalCache(){
   localStorage.setItem("ccAreas",JSON.stringify(areas));
   localStorage.setItem("ccSchedule",JSON.stringify(data));
   localStorage.setItem("ccSelectedArea",selectedArea);
   localStorage.setItem("ccWeeklyNotes",JSON.stringify(weeklyNotes));
+}
+
+let remoteHydrated=false;
+let remoteWriteInProgress=false;
+
+async function persistSchedule(){
+  // Keep a local cache for fast startup/offline fallback.
+  persistLocalCache();
+
+  // Only authenticated Admin sessions may publish shared schedule changes.
+  if(!isAdminMode || remoteWriteInProgress) return;
+
+  remoteWriteInProgress=true;
+  try{
+    await setDoc(SHARED_SCHEDULE_REF,{
+      areas,
+      data,
+      weeklyNotes,
+      updatedAt:serverTimestamp(),
+      updatedBy:auth.currentUser?.email || auth.currentUser?.uid || "admin"
+    },{merge:true});
+    showSaveToast("Saved for all users ✓");
+  }catch(error){
+    console.error("Shared schedule save error:",error);
+    showSaveToast("Cloud save failed — local copy kept");
+  }finally{
+    remoteWriteInProgress=false;
+  }
+}
+
+function applyRemoteSchedule(remote){
+  if(!remote) return;
+  if(remote.areas) areas=remote.areas;
+  if(remote.data) data=remote.data;
+  if(remote.weeklyNotes) weeklyNotes=remote.weeklyNotes;
+  remoteHydrated=true;
+  persistLocalCache();
+  lastSavedSnapshot=createScheduleSnapshot();
+  render();
+  updateHistoryButtons();
+}
+
+function startSharedScheduleSync(){
+  return onSnapshot(SHARED_SCHEDULE_REF,snapshot=>{
+    if(snapshot.exists()){
+      applyRemoteSchedule(snapshot.data());
+    }else{
+      remoteHydrated=true;
+      // First authenticated Admin seeds the shared document from the current local/default state.
+      if(isAdminMode) persistSchedule();
+    }
+  },error=>{
+    console.error("Shared schedule sync error:",error);
+    showSaveToast("Using local schedule — cloud unavailable");
+  });
 }
 
 function updateHistoryButtons(){
@@ -2086,7 +2153,7 @@ function updateHistoryButtons(){
   if(redoBtn) redoBtn.disabled=redoStack.length===0;
 }
 
-function showSaveToast(message="Saved locally ✓"){
+function showSaveToast(message="Saved ✓"){
   const toast=document.getElementById("saveToast");
   if(!toast) return;
   toast.textContent=message;
@@ -3104,9 +3171,20 @@ function applyAdminMode(){
   Authenticated in Operations -> editable Admin Mode.
   No authenticated session -> read-only user mode.
 */
-onAuthStateChanged(auth,user=>{
+onAuthStateChanged(auth,async user=>{
   isAdminMode=!!user;
   applyAdminMode();
+
+  // If this is the first Admin opening the Firestore-backed version and no
+  // shared document exists yet, publish the existing local/default schedule.
+  if(isAdminMode && remoteHydrated){
+    try{
+      const snapshot=await getDoc(SHARED_SCHEDULE_REF);
+      if(!snapshot.exists()) await persistSchedule();
+    }catch(error){
+      console.error("Initial shared schedule check error:",error);
+    }
+  }
 });
 
 const OPS_THEME_KEY="paramedWeeklyTheme";
@@ -3121,10 +3199,13 @@ document.getElementById("themeToggle").onclick=()=>{
   applyOpsTheme(document.body.classList.contains("dark")?"light":"dark");
 };
 
-initSample();
+// Build sample data only when this browser has no schedule at all. It is no longer
+// allowed to overwrite an existing shared Firestore schedule.
+if(!Object.keys(data).length) initSample();
 lastSavedSnapshot=createScheduleSnapshot();
 updateHistoryButtons();
 render();
+startSharedScheduleSync();
 
 function syncSemanticStatusUI(){
   document.querySelectorAll(".open-card").forEach(card=>{
