@@ -1756,6 +1756,257 @@ body.admin-mode #closeReadonlyShift{display:none !important}
 }
 body.dark .base-schedule-line{color:rgba(255,255,255,.82);opacity:.82}
 body.dark .coverage-shift-block{color:#fff}
+
+
+/* =========================================================
+   PROFESSIONAL SCHEDULER UI — clean operations workspace
+   Visual-only layer. No scheduling/Firebase logic changed.
+   ========================================================= */
+:root{
+  --pro-navy:#15233b;
+  --pro-blue:#2563eb;
+  --pro-sky:#eef5ff;
+  --pro-surface:#ffffff;
+  --pro-bg:#f4f7fb;
+  --pro-border:#dfe6ef;
+  --pro-muted:#64748b;
+  --pro-shadow:0 10px 30px rgba(15,23,42,.07);
+}
+body:not(.dark){
+  background:
+    radial-gradient(circle at 10% -10%,rgba(37,99,235,.07),transparent 28%),
+    #f4f7fb;
+}
+.app{max-width:1580px;padding:22px 28px 36px}
+
+/* Header */
+.topbar,.ops-scheduler-topbar{
+  min-height:58px !important;
+  margin-bottom:16px !important;
+  padding:8px 12px !important;
+  border:1px solid var(--line) !important;
+  border-radius:16px !important;
+  background:rgba(255,255,255,.76) !important;
+  box-shadow:0 5px 20px rgba(15,23,42,.045) !important;
+  backdrop-filter:blur(18px) !important;
+  -webkit-backdrop-filter:blur(18px) !important;
+}
+body.dark .topbar,body.dark .ops-scheduler-topbar{
+  background:rgba(31,34,54,.84) !important;
+  border-color:rgba(155,109,255,.22) !important;
+}
+.scheduler-brand-icon{
+  width:40px;height:40px;flex-basis:40px;border-radius:11px;
+  background:linear-gradient(145deg,#2563eb,#4f8cff);
+  color:#fff;box-shadow:0 7px 18px rgba(37,99,235,.22);
+}
+.scheduler-title{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.date-sub{font-size:11px;font-weight:600;letter-spacing:.01em}
+
+/* Week summary */
+.hero{
+  position:relative;
+  padding:20px 22px !important;
+  border-radius:18px !important;
+  box-shadow:var(--pro-shadow) !important;
+}
+.hero::before{
+  content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;
+  border-radius:0 5px 5px 0;background:linear-gradient(#2563eb,#67a1ff);
+}
+.week-label{font-size:10px !important;letter-spacing:.12em !important;color:#2563eb !important}
+.week-big{font-size:36px !important;font-weight:850 !important;letter-spacing:-.04em !important}
+.date-big{font-size:14px !important;margin-top:7px !important}
+.today-badge{margin-top:10px !important;border-radius:999px !important;padding:6px 10px !important}
+
+/* Area switcher */
+.area-tabs{
+  width:max-content;max-width:100%;padding:5px !important;gap:4px !important;
+  border-radius:12px !important;box-shadow:0 4px 15px rgba(15,23,42,.04) !important;
+}
+.area-tab{min-width:96px !important;border:0 !important;border-radius:8px !important;font-weight:800 !important}
+.area-tab.active{
+  background:#fff !important;color:#2563eb !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.10),inset 0 0 0 1px rgba(37,99,235,.12) !important;
+}
+body.dark .area-tab.active{background:rgba(155,109,255,.17) !important;color:#d9caff !important}
+
+/* Productivity actions */
+.productivity-bar{margin:0 0 12px}
+.productivity-actions{gap:7px}
+.btn,.small-button{
+  border-radius:9px !important;font-weight:750 !important;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease,background .15s ease !important;
+}
+.btn:hover,.small-button:hover{transform:translateY(-1px)}
+.pdf-btn{background:#15233b !important;color:#fff !important;border-color:#15233b !important}
+body.dark .pdf-btn{background:#f3f5fa !important;color:#182033 !important;border-color:#f3f5fa !important}
+
+/* Notes as compact operational cards */
+.weekly-notes{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important}
+.note-card{border-radius:13px !important;box-shadow:0 5px 18px rgba(15,23,42,.045) !important}
+.note-head{min-height:42px;padding:10px 13px !important;font-size:11px !important;text-transform:uppercase;letter-spacing:.06em}
+.note-add{width:27px;height:27px;padding:0 !important;border-radius:7px !important;font-size:15px !important}
+.note-list{min-height:43px}
+
+/* Main schedule */
+.card{border-radius:16px !important;box-shadow:0 12px 32px rgba(15,23,42,.065) !important}
+.toolbar{min-height:58px;padding:10px 14px !important;background:rgba(248,250,252,.72) !important}
+body.dark .toolbar{background:rgba(255,255,255,.018) !important}
+.legend{align-items:center;gap:6px !important}
+.pill{padding:5px 8px !important;border-radius:6px !important;font-size:9px !important;letter-spacing:.045em}
+
+.schedule{grid-template-columns:220px repeat(7,minmax(128px,1fr)) !important}
+.cell{min-height:86px !important;border-color:#e6ebf2 !important}
+body.dark .cell{border-color:rgba(255,255,255,.075) !important}
+.head{
+  min-height:54px !important;padding:10px 8px !important;
+  background:#f8fafc !important;color:#64748b !important;
+  letter-spacing:.08em !important;
+}
+body.dark .head{background:rgba(255,255,255,.035) !important;color:#aeb5c7 !important}
+.head.today{box-shadow:inset 0 -3px 0 #2563eb}
+.worker{
+  padding:10px 12px !important;background:#fbfcfe !important;
+  box-shadow:5px 0 12px rgba(15,23,42,.025);
+}
+body.dark .worker{background:#292c43 !important}
+.avatar{
+  width:34px !important;height:34px !important;border-radius:10px !important;
+  background:#eaf2ff !important;color:#2563eb !important;font-weight:850 !important;
+}
+body.dark .avatar{background:rgba(155,109,255,.13) !important;color:#d8caff !important}
+.worker>div:not(.avatar){line-height:1.25}
+.role{margin-top:4px !important;text-transform:uppercase;letter-spacing:.055em}
+.slot{min-height:86px !important;font-size:11.5px !important;line-height:1.35 !important}
+.slot:hover{box-shadow:inset 0 0 0 2px rgba(37,99,235,.13) !important}
+.slot.shift{background:#edf4ff !important;color:#244f9e !important}
+.slot.off{background:#f7f8fa !important;color:#7a8494 !important;font-size:12px !important;font-weight:800 !important}
+.slot.vac{background:#fff1fa !important;color:#a82b73 !important}
+.slot.bo{background:#f4efff !important;color:#6943ad !important}
+.slot.shift-open{background:#eef5ff !important;color:#2458bd !important}
+.slot.shift-filled{background:#edf9f1 !important;color:#1f7543 !important}
+body.dark .slot.shift,body.dark .slot.shift-open{background:rgba(60,130,246,.10) !important;color:#9bc0ff !important}
+body.dark .slot.off{background:rgba(255,255,255,.035) !important;color:#b9c0ce !important}
+body.dark .slot.vac{background:rgba(231,61,153,.10) !important;color:#ff9ed3 !important}
+body.dark .slot.bo{background:rgba(139,92,246,.11) !important;color:#c5a9ff !important}
+body.dark .slot.shift-filled{background:rgba(34,197,94,.10) !important;color:#8ce2aa !important}
+.base-schedule-line{font-weight:750 !important}
+
+/* Current day — clearer column focus without overpowering status colors */
+.schedule .today-column{
+  background:linear-gradient(180deg,rgba(59,130,246,.075),rgba(59,130,246,.025)) !important;
+  box-shadow:inset 1px 0 0 rgba(59,130,246,.16),inset -1px 0 0 rgba(59,130,246,.16);
+}
+.schedule .today-column .slot{
+  box-shadow:inset 0 0 0 1px rgba(59,130,246,.12);
+}
+.schedule .head.today{
+  position:relative;
+  background:linear-gradient(135deg,rgba(28,78,132,.86),rgba(59,130,246,.70)) !important;
+  box-shadow:inset 0 -3px 0 rgba(147,197,253,.95),0 4px 14px rgba(37,99,235,.12) !important;
+}
+.schedule .head.today::after{
+  content:"TODAY";
+  position:absolute;
+  top:6px;right:7px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);
+  color:#fff;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.09em;
+}
+body.dark .schedule .today-column{
+  background:linear-gradient(180deg,rgba(96,165,250,.075),rgba(96,165,250,.02)) !important;
+  box-shadow:inset 1px 0 0 rgba(147,197,253,.14),inset -1px 0 0 rgba(147,197,253,.14);
+}
+body.dark .schedule .today-column .slot{
+  box-shadow:inset 0 0 0 1px rgba(147,197,253,.10);
+}
+
+/* Clean schedule contrast — softer translucent blue hierarchy */
+.head{
+  background:rgba(28,78,132,.78) !important;
+  color:#eef6ff !important;
+  border-color:rgba(36,84,132,.38) !important;
+}
+.head .daynum{color:#ffffff !important}
+.head.today{
+  background:rgba(31,91,154,.82) !important;
+  box-shadow:inset 0 -3px 0 rgba(147,197,253,.9) !important;
+}
+.worker{
+  background:rgba(28,78,132,.78) !important;
+  color:#ffffff !important;
+  border-color:rgba(36,84,132,.38) !important;
+  box-shadow:5px 0 12px rgba(15,23,42,.045) !important;
+}
+.worker>div{line-height:1.25}
+.worker .role{color:#d5e4f4 !important}
+.slot{
+  background:#f7fbff !important;
+  color:#6b7f95 !important;
+}
+.slot.shift{
+  background:rgba(39,94,151,.72) !important;
+  color:#ffffff !important;
+  border-color:rgba(45,100,157,.34) !important;
+}
+.slot.off{
+  background:#f7fbff !important;
+  color:#73869a !important;
+  border-color:#e4edf6 !important;
+}
+.slot.shift-open{
+  background:rgba(48,116,184,.72) !important;
+  color:#ffffff !important;
+  border-color:rgba(50,119,184,.34) !important;
+}
+.slot.shift-filled{
+  background:#edf9f1 !important;
+  color:#1f7543 !important;
+}
+body.dark .head,body.dark .worker{
+  background:rgba(31,69,111,.82) !important;
+  color:#ffffff !important;
+  border-color:rgba(112,154,197,.25) !important;
+}
+body.dark .head{color:#e8f2fc !important}
+body.dark .head .daynum{color:#ffffff !important}
+body.dark .worker .role{color:#cfdeed !important}
+body.dark .slot{background:#f7fbff !important;color:#6b7f95 !important}
+body.dark .slot.shift{background:rgba(39,94,151,.76) !important;color:#ffffff !important;border-color:rgba(95,150,204,.30) !important}
+body.dark .slot.off{background:#f7fbff !important;color:#73869a !important;border-color:#e4edf6 !important}
+body.dark .slot.shift-open{background:rgba(48,116,184,.76) !important;color:#ffffff !important}
+
+/* Open shift drawer */
+.open-shift-toggle{
+  right:0 !important;border-radius:11px 0 0 11px !important;
+  font-size:11px !important;font-weight:800 !important;letter-spacing:.01em;
+}
+.open-shift-panel{width:min(390px,94vw) !important}
+.open-panel-head{padding:18px !important}
+.open-panel-kicker{text-transform:uppercase;letter-spacing:.09em;font-size:9px !important;font-weight:850 !important}
+.open-panel-head h3{font-size:20px !important;letter-spacing:-.025em}
+.open-card{border-radius:11px !important;box-shadow:0 4px 14px rgba(15,23,42,.045) !important}
+
+/* Modal polish */
+.modal-box{border-radius:16px !important;box-shadow:0 28px 80px rgba(15,23,42,.22) !important}
+.modal h2{font-size:18px !important;letter-spacing:-.02em}
+.quick-status button,.modal-actions button{border-radius:8px !important}
+.wheel-picker{border-radius:11px !important}
+
+/* Small screens */
+@media(max-width:900px){
+  .app{padding:14px 12px 28px}
+  .weekly-notes{grid-template-columns:1fr !important}
+  .hero{padding:17px !important}
+  .week-big{font-size:31px !important}
+  .topbar,.ops-scheduler-topbar{padding:7px 9px !important}
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
@@ -2572,14 +2823,14 @@ function render(){
   (areas[selectedArea]||[]).forEach(worker=>{
     const w=document.createElement("div");
     w.className="cell worker";
-    w.innerHTML=`<span class="avatar">${initials(worker.name)}</span>
-      <div><div>${esc(worker.name)}</div>${worker.role?`<div class="role">${esc(worker.role)}</div>`:""}</div>`;
+    w.innerHTML=`<div><div>${esc(worker.name)}</div>${worker.role?`<div class="role">${esc(worker.role)}</div>`:""}</div>`;
     root.appendChild(w);
 
     days.forEach(d=>{
       const ds=iso(d);
       const value=data?.[wk]?.[selectedArea]?.[worker.name]?.[ds]||"";
-      const c=document.createElement("div"); c.className="cell";
+      const c=document.createElement("div");
+      c.className="cell"+(ds===today?" today-column":"");
       const slot=document.createElement("button");
       const openShift=getOpenShiftForCell(worker.name,ds,value);
       const coverageShifts=getFilledOpenShiftsForWorkerDate(worker.name,ds);
@@ -3320,5 +3571,138 @@ areaIdentityObserver.observe(document.body,{childList:true,subtree:true});
 syncAreaIdentity();
 
 </script>
+
+<style id="schedule-status-gradients-v7">
+/* Slightly richer status gradients — same soft glass language */
+.slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(74,222,128,.075)) !important;border-color:rgba(34,197,94,.18) !important}
+.slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.22),rgba(255,122,194,.075)) !important;border-color:rgba(231,61,153,.18) !important}
+.slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(183,148,255,.075)) !important;border-color:rgba(139,92,246,.18) !important}
+.slot.shift-open{background:linear-gradient(135deg,rgba(36,104,255,.22),rgba(75,145,215,.075)) !important;border-color:rgba(36,104,255,.18) !important}
+body.dark .slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.20),rgba(74,222,128,.07)) !important}
+body.dark .slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.20),rgba(255,122,194,.07)) !important}
+body.dark .slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.20),rgba(183,148,255,.07)) !important}
+body.dark .slot.shift-open{background:linear-gradient(135deg,rgba(91,155,213,.20),rgba(112,190,224,.07)) !important}
+</style>
 </body>
+
+<style>
+/* Schedule cleanup v5 — equal soft glass shading per status */
+.slot.shift-filled{
+  background:linear-gradient(135deg,rgba(34,197,94,.105),rgba(34,197,94,.045)) !important;
+  color:#287249 !important;border-color:rgba(34,197,94,.13) !important;
+}
+.slot.vac{
+  background:linear-gradient(135deg,rgba(231,61,153,.105),rgba(231,61,153,.045)) !important;
+  color:#a04778 !important;border-color:rgba(231,61,153,.13) !important;
+}
+.slot.bo{
+  background:linear-gradient(135deg,rgba(139,92,246,.105),rgba(139,92,246,.045)) !important;
+  color:#7255a4 !important;border-color:rgba(139,92,246,.13) !important;
+}
+.slot.shift-open{
+  background:linear-gradient(135deg,rgba(36,104,255,.105),rgba(36,104,255,.045)) !important;
+  color:#315f91 !important;border-color:rgba(36,104,255,.13) !important;
+}
+body.dark .slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(34,197,94,.055)) !important;color:#8ce2aa !important;border-color:rgba(34,197,94,.14) !important}
+body.dark .slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.12),rgba(231,61,153,.055)) !important;color:#ff9ed3 !important;border-color:rgba(231,61,153,.14) !important}
+body.dark .slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(139,92,246,.055)) !important;color:#c5a9ff !important;border-color:rgba(139,92,246,.14) !important}
+body.dark .slot.shift-open{background:linear-gradient(135deg,rgba(91,155,213,.12),rgba(91,155,213,.055)) !important;color:#b7d8f5 !important;border-color:rgba(91,155,213,.14) !important}
+</style>
 </html>
+<style>
+/* Schedule cleanup v4 — soft Coverage-style blue glass */
+.head,
+.worker{
+  background:linear-gradient(135deg,rgba(36,104,255,.105),rgba(0,190,210,.045)) !important;
+  color:#24486f !important;
+  border-color:rgba(36,104,255,.14) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72) !important;
+}
+.head .daynum{color:#173f69 !important}
+.head.today{
+  background:linear-gradient(135deg,rgba(36,104,255,.17),rgba(0,190,210,.075)) !important;
+  color:#174d88 !important;
+  box-shadow:inset 0 -2px 0 rgba(36,104,255,.38) !important;
+}
+.worker .role{color:#7890aa !important}
+.avatar{
+  background:rgba(36,104,255,.09) !important;
+  color:#3267a2 !important;
+}
+.slot{
+  background:rgba(246,250,255,.80) !important;
+  color:#71869b !important;
+}
+.slot.shift{
+  background:linear-gradient(135deg,rgba(36,104,255,.14),rgba(75,145,215,.085)) !important;
+  color:#24558a !important;
+  border-color:rgba(36,104,255,.13) !important;
+}
+.slot.off{
+  background:rgba(248,251,255,.72) !important;
+  color:#91a0af !important;
+  border-color:rgba(100,130,160,.10) !important;
+}
+.slot.shift-open{
+  background:linear-gradient(135deg,rgba(36,104,255,.18),rgba(0,190,210,.09)) !important;
+  color:#1f5e9b !important;
+  border-color:rgba(36,104,255,.16) !important;
+}
+/* Keep semantic statuses distinct but soft */
+.slot.shift-filled{background:rgba(34,197,94,.09) !important;color:#287249 !important}
+.slot.vac{background:rgba(231,61,153,.075) !important;color:#a04778 !important}
+.slot.bo{background:rgba(139,92,246,.075) !important;color:#7255a4 !important}
+
+body.dark .head,
+body.dark .worker{
+  background:linear-gradient(135deg,rgba(155,109,255,.11),rgba(255,155,54,.045)) !important;
+  color:#e9e4f7 !important;
+  border-color:rgba(185,162,241,.15) !important;
+}
+body.dark .head .daynum{color:#f4efff !important}
+body.dark .worker .role{color:#aaa4bb !important}
+body.dark .slot{background:rgba(255,255,255,.025) !important;color:#a8adba !important}
+body.dark .slot.shift{background:rgba(155,109,255,.10) !important;color:#d5c8f4 !important;border-color:rgba(185,162,241,.13) !important}
+body.dark .slot.off{background:rgba(255,255,255,.018) !important;color:#858a98 !important;border-color:rgba(255,255,255,.055) !important}
+body.dark .slot.shift-open{background:rgba(91,155,213,.12) !important;color:#b7d8f5 !important}
+</style>
+
+<style>
+/* Schedule cleanup v6 — matching gradient treatment for every semantic status */
+.slot.shift-filled{
+  background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(74,222,128,.045)) !important;
+  color:#287249 !important;
+  border-color:rgba(34,197,94,.13) !important;
+}
+.slot.vac{
+  background:linear-gradient(135deg,rgba(231,61,153,.14),rgba(255,122,194,.045)) !important;
+  color:#a04778 !important;
+  border-color:rgba(231,61,153,.13) !important;
+}
+.slot.bo{
+  background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(183,148,255,.045)) !important;
+  color:#7255a4 !important;
+  border-color:rgba(139,92,246,.13) !important;
+}
+.slot.shift-open{
+  background:linear-gradient(135deg,rgba(36,104,255,.14),rgba(75,145,215,.045)) !important;
+  color:#315f91 !important;
+  border-color:rgba(36,104,255,.13) !important;
+}
+body.dark .slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(74,222,128,.05)) !important;color:#8ce2aa !important}
+body.dark .slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.14),rgba(255,122,194,.05)) !important;color:#ff9ed3 !important}
+body.dark .slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(183,148,255,.05)) !important;color:#c5a9ff !important}
+body.dark .slot.shift-open{background:linear-gradient(135deg,rgba(91,155,213,.14),rgba(112,190,224,.05)) !important;color:#b7d8f5 !important}
+</style>
+
+<style id="schedule-status-gradients-v8">
+/* Stronger semantic gradients while preserving the translucent Coverage look */
+.slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.34) 0%,rgba(74,222,128,.18) 48%,rgba(220,252,231,.07) 100%) !important;border-color:rgba(34,197,94,.24) !important}
+.slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.34) 0%,rgba(255,122,194,.18) 48%,rgba(253,232,243,.07) 100%) !important;border-color:rgba(231,61,153,.24) !important}
+.slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.34) 0%,rgba(183,148,255,.18) 48%,rgba(237,233,254,.07) 100%) !important;border-color:rgba(139,92,246,.24) !important}
+.slot.shift-open{background:linear-gradient(135deg,rgba(36,104,255,.34) 0%,rgba(75,145,215,.18) 48%,rgba(219,234,254,.07) 100%) !important;border-color:rgba(36,104,255,.24) !important}
+body.dark .slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.30) 0%,rgba(74,222,128,.16) 48%,rgba(34,197,94,.055) 100%) !important}
+body.dark .slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.30) 0%,rgba(255,122,194,.16) 48%,rgba(231,61,153,.055) 100%) !important}
+body.dark .slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.30) 0%,rgba(183,148,255,.16) 48%,rgba(139,92,246,.055) 100%) !important}
+body.dark .slot.shift-open{background:linear-gradient(135deg,rgba(91,155,213,.30) 0%,rgba(112,190,224,.16) 48%,rgba(91,155,213,.055) 100%) !important}
+</style>
