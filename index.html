@@ -1707,6 +1707,55 @@ body.admin-mode #closeReadonlyShift{display:none !important}
 }
 .readonly-open-coverage strong{color:var(--text)}
 
+
+
+/* Accepted Open Shift shown on the coverage person's calendar */
+.slot.has-coverage-shift{
+  padding:6px !important;
+  gap:4px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  overflow:hidden;
+}
+.base-schedule-line{
+  display:block;
+  font-size:10px;
+  line-height:1.1;
+  font-weight:850;
+  opacity:.62;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.coverage-shift-block{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:5px 6px;
+  border-radius:9px;
+  background:var(--status-filled);
+  color:#fff;
+  box-shadow:0 5px 14px rgba(34,197,94,.20);
+}
+.coverage-shift-label{
+  font-size:8px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.coverage-shift-time{
+  margin-top:2px;
+  font-size:11px;
+  line-height:1.05;
+  font-weight:950;
+  white-space:nowrap;
+}
+body.dark .base-schedule-line{color:rgba(255,255,255,.82);opacity:.82}
+body.dark .coverage-shift-block{color:#fff}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
@@ -2416,6 +2465,18 @@ function getOpenShiftForCell(workerName,date,value){
   ) || null;
 }
 
+// FILLED Open Shifts are rendered as additional work on the coverage person's
+// calendar. The person's original schedule (including OFF) is never destroyed,
+// so removing/reopening the Open Shift automatically restores the base cell.
+function getFilledOpenShiftsForWorkerDate(workerName,date){
+  const notes=currentAreaWeekNotes();
+  return (notes.open || []).filter(n =>
+    n.date===date &&
+    n.status==="FILLED" &&
+    n.coveredBy===workerName
+  );
+}
+
 let draggedShift=null;
 let duplicateSource=null;
 
@@ -2521,10 +2582,23 @@ function render(){
       const c=document.createElement("div"); c.className="cell";
       const slot=document.createElement("button");
       const openShift=getOpenShiftForCell(worker.name,ds,value);
+      const coverageShifts=getFilledOpenShiftsForWorkerDate(worker.name,ds);
 
       slot.className="slot "+cellClass(value);
 
-      if(openShift){
+      if(coverageShifts.length){
+        // A coverage shift is additional work. Keep the base schedule visible
+        // (OFF, VAC, B/O, or a regular shift) and show every accepted Open Shift.
+        slot.classList.add("has-coverage-shift");
+        const baseLabel=value || "No regular shift";
+        const coverageHtml=coverageShifts.map(n=>`
+          <span class="coverage-shift-block">
+            <span class="coverage-shift-label">OPEN SHIFT</span>
+            <span class="coverage-shift-time">${esc(n.start)} - ${esc(n.end)}</span>
+          </span>`).join("");
+        slot.innerHTML=`<span class="base-schedule-line">${esc(baseLabel)}</span>${coverageHtml}`;
+        slot.setAttribute("aria-label",`${worker.name}: ${baseLabel}; Open Shift ${coverageShifts.map(n=>`${n.start} to ${n.end}`).join(", ")}`);
+      }else if(openShift){
         slot.classList.add(openShift.status==="FILLED" ? "shift-filled" : "shift-open");
         slot.innerHTML=`<span class="slot-time-only">${esc(value)}</span>`;
       }else if(value){
