@@ -2012,6 +2012,48 @@ body.dark .slot.shift-open{background:rgba(48,116,184,.76) !important;color:#fff
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
 
+
+<style id="area-focus-clean-v1">
+/* Selected area focus: active area is centered, larger, and visually dominant. */
+.area-tabs{
+  width:100% !important;
+  max-width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+  flex-wrap:nowrap !important;
+  overflow:visible !important;
+  padding:10px 12px !important;
+}
+.area-tab{
+  flex:0 0 auto !important;
+  min-width:108px !important;
+  min-height:38px !important;
+  opacity:.68 !important;
+  transform:scale(.94) !important;
+  transition:transform .42s cubic-bezier(.22,.8,.22,1),opacity .32s ease,box-shadow .32s ease,filter .32s ease,min-width .42s cubic-bezier(.22,.8,.22,1),min-height .42s cubic-bezier(.22,.8,.22,1) !important;
+}
+.area-tab:hover{
+  opacity:.88 !important;
+  transform:translateY(-1px) scale(.98) !important;
+}
+.area-tab.active{
+  min-width:150px !important;
+  min-height:48px !important;
+  opacity:1 !important;
+  transform:scale(1.08) !important;
+  font-size:13px !important;
+  box-shadow:0 9px 24px rgba(15,23,42,.16),0 0 0 2px rgba(255,255,255,.46) !important;
+  z-index:2 !important;
+}
+.area-tab.active:hover{transform:translateY(-1px) scale(1.08) !important}
+@media(max-width:620px){
+  .area-tabs{gap:7px !important;padding:8px !important}
+  .area-tab{min-width:78px !important;padding-left:9px !important;padding-right:9px !important}
+  .area-tab.active{min-width:112px !important;min-height:44px !important}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -2560,18 +2602,46 @@ function cellClass(value){
   return "shift";
 }
 function renderTabs(){
-  document.querySelectorAll(".area-tab").forEach(b=>{
-    b.classList.toggle("active",b.dataset.area===selectedArea);
+  const container=document.querySelector(".area-tabs");
+  if(!container) return;
+
+  const tabs=[...container.querySelectorAll(".area-tab")];
+  const active=tabs.find(b=>b.dataset.area===selectedArea);
+  if(!active) return;
+
+  // Capture where every button is before changing the order.
+  const before=new Map(tabs.map(tab=>[tab,tab.getBoundingClientRect()]));
+
+  tabs.forEach(b=>b.classList.toggle("active",b===active));
+
+  // Put the selected area physically in the middle: LEFT · ACTIVE · RIGHT.
+  const others=tabs.filter(b=>b!==active);
+  if(others.length===2) container.append(others[0],active,others[1]);
+
+  // FLIP using the independent CSS `translate` property. This is intentional:
+  // the existing stylesheet uses transform: ... !important for scale, which was
+  // cancelling the previous transform-based animation.
+  const reordered=[...container.querySelectorAll(".area-tab")];
+  reordered.forEach(tab=>{
+    const oldRect=before.get(tab);
+    const newRect=tab.getBoundingClientRect();
+    if(!oldRect) return;
+    const dx=oldRect.left-newRect.left;
+    const dy=oldRect.top-newRect.top;
+
+    tab.getAnimations().forEach(a=>{
+      if(a.effect && a.effect.target===tab) a.cancel();
+    });
+
+    if(Math.abs(dx)<1 && Math.abs(dy)<1) return;
+    tab.animate(
+      [
+        {translate:`${dx}px ${dy}px`},
+        {translate:"0px 0px"}
+      ],
+      {duration:560,easing:"cubic-bezier(.22,.9,.22,1)",fill:"none"}
+    );
   });
-}
-function renderHero(){
-  const start=mondayForOffset();
-  const end=new Date(start); end.setDate(start.getDate()+6);
-  $("#weekNumberLabel").textContent=`WEEK ${getWeekNumber(start)} · ${selectedArea}`;
-  $("#weekBig").textContent=`${start.toLocaleDateString("en-CA",{month:"long",day:"numeric"})} – ${end.toLocaleDateString("en-CA",{month:"long",day:"numeric"})}`;
-  $("#dateBig").textContent=start.getFullYear();
-  const now=new Date();
-  $("#todayBadge").textContent=`Today · ${now.toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric"})}`;
 }
 
 function currentAreaWeekNotes(){
@@ -3048,23 +3118,23 @@ function makeWheelPicker(rootId, initialHour=9, initialMinute=0, initialPeriod="
   }
 
   const hourWheel=makeWheel(Array.from({length:12},(_,i)=>String(i+1)));
-  const minuteWheel=makeWheel(Array.from({length:12},(_,i)=>String(i*5).padStart(2,"0")));
+  const minuteWheel=makeWheel(["00","30"]);
   const periodWheel=makeWheel(["AM","PM"]);
 
   const state={hour:initialHour,minute:initialMinute,period:initialPeriod};
 
   function indexFor(type){
     if(type==="h") return state.hour-1;
-    if(type==="m") return Math.round(state.minute/5);
+    if(type==="m") return state.minute>=15?1:0;
     return state.period==="PM"?1:0;
   }
 
-  function maxFor(type){ return type==="p" ? 1 : 11; }
+  function maxFor(type){ return (type==="p" || type==="m") ? 1 : 11; }
 
   function setIndex(type,idx,animate=true){
     idx=Math.max(0,Math.min(maxFor(type),idx));
     if(type==="h") state.hour=idx+1;
-    if(type==="m") state.minute=idx*5;
+    if(type==="m") state.minute=idx*30;
     if(type==="p") state.period=idx===1?"PM":"AM";
 
     const wheel=type==="h"?hourWheel:type==="m"?minuteWheel:periodWheel;
@@ -3099,7 +3169,7 @@ function makeWheelPicker(rootId, initialHour=9, initialMinute=0, initialPeriod="
     state.minute=parseInt(m[2]||"0",10);
     state.period=m[3].toUpperCase();
     setIndex("h",state.hour-1,false);
-    setIndex("m",Math.round(state.minute/5),false);
+    setIndex("m",state.minute>=15?1:0,false);
     setIndex("p",state.period==="PM"?1:0,false);
   }
 
@@ -3108,7 +3178,7 @@ function makeWheelPicker(rootId, initialHour=9, initialMinute=0, initialPeriod="
   }
 
   setIndex("h",state.hour-1,false);
-  setIndex("m",Math.round(state.minute/5),false);
+  setIndex("m",state.minute>=15?1:0,false);
   setIndex("p",state.period==="PM"?1:0,false);
 
   return {state,parseTime,value};
@@ -3162,7 +3232,30 @@ $("#sendOpenShift").onclick=()=>{
 $("#openShiftToggle").onclick=()=>$("#openShiftPanel").classList.add("show");
 $("#closeOpenPanel").onclick=()=>$("#openShiftPanel").classList.remove("show");
 
-$("#clearCell").onclick=()=>{ if(isAdminMode) setValue(""); };
+$("#clearCell").onclick=()=>{
+  if(!isAdminMode || !selected) return;
+
+  const wk=weekKey();
+  data[wk] ||= {};
+  data[wk][selectedArea] ||= {};
+  data[wk][selectedArea][selected.worker.name] ||= {};
+
+  // Clear means a true reset: remove the base schedule value...
+  delete data[wk][selectedArea][selected.worker.name][selected.date];
+
+  // ...and remove Open Shift metadata that would otherwise keep rendering
+  // something in the cell. After Clear, the cell must return to the + state.
+  const notes=currentAreaWeekNotes();
+  notes.open=(notes.open||[]).filter(item=>{
+    const sourcedHere=item.date===selected.date && item.sourceWorker===selected.worker.name;
+    const coveredHere=item.date===selected.date && item.status==="FILLED" && item.coveredBy===selected.worker.name;
+    return !sourcedHere && !coveredHere;
+  });
+
+  save();
+  render();
+  closeEditor();
+};
 $("#cancelEdit").onclick=closeEditor;
 
 $("#prevWeek").onclick=()=>{weekOffset--;render()};
@@ -3705,4 +3798,70 @@ body.dark .slot.shift-filled{background:linear-gradient(135deg,rgba(34,197,94,.3
 body.dark .slot.vac{background:linear-gradient(135deg,rgba(231,61,153,.30) 0%,rgba(255,122,194,.16) 48%,rgba(231,61,153,.055) 100%) !important}
 body.dark .slot.bo{background:linear-gradient(135deg,rgba(139,92,246,.30) 0%,rgba(183,148,255,.16) 48%,rgba(139,92,246,.055) 100%) !important}
 body.dark .slot.shift-open{background:linear-gradient(135deg,rgba(91,155,213,.30) 0%,rgba(112,190,224,.16) 48%,rgba(91,155,213,.055) 100%) !important}
+
+/* ACTIVE AREA — centered shimmering banner */
+/* Keep each area's real palette while active. This must live after the
+   professional-theme .area-tab.active white rule. */
+.area-tab.active[data-area="CWMH"]{
+  background:linear-gradient(135deg,#0B4EA2 0%,#1687FF 52%,#29A9E8 100%) !important;
+}
+.area-tab.active[data-area="CONS"]{
+  background:linear-gradient(135deg,#D85B2D 0%,#F07B32 52%,#F5A14B 100%) !important;
+}
+.area-tab.active[data-area="TOR-UNI"]{
+  background:linear-gradient(135deg,#B51F3E 0%,#8A315F 42%,#2358B8 100%) !important;
+}
+body.dark .area-tab.active[data-area="CWMH"]{
+  background:linear-gradient(135deg,#4772D0 0%,#5B9BD5 52%,#49AFE0 100%) !important;
+}
+body.dark .area-tab.active[data-area="CONS"]{
+  background:linear-gradient(135deg,#C95732 0%,#DC743B 52%,#E89047 100%) !important;
+}
+body.dark .area-tab.active[data-area="TOR-UNI"]{
+  background:linear-gradient(135deg,#B51F3E 0%,#86406E 42%,#3769C8 100%) !important;
+}
+.area-tab.active{
+  position:relative !important;
+  overflow:hidden !important;
+  color:#fff !important;
+  border-color:rgba(255,255,255,.72) !important;
+  filter:brightness(1.08) saturate(1.12) !important;
+  box-shadow:0 0 0 2px rgba(255,255,255,.30),0 10px 28px rgba(9,43,87,.25),inset 0 1px 0 rgba(255,255,255,.45) !important;
+}
+.area-tab.active::after{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  top:-45% !important;
+  bottom:-45% !important;
+  left:-55% !important;
+  width:34% !important;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),rgba(255,255,255,.72),rgba(255,255,255,.18),transparent) !important;
+  transform:skewX(-18deg) !important;
+  pointer-events:none !important;
+  animation:areaShimmer 1.75s cubic-bezier(.4,0,.2,1) infinite !important;
+}
+.area-tab.active::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  border-radius:inherit !important;
+  background:linear-gradient(110deg,rgba(255,255,255,.08),transparent 38%,rgba(255,255,255,.12) 62%,transparent) !important;
+  pointer-events:none !important;
+  animation:areaGlow 2.4s ease-in-out infinite !important;
+}
+@keyframes areaShimmer{
+  0%{left:-55%;opacity:0}
+  12%{opacity:1}
+  62%{opacity:1}
+  100%{left:125%;opacity:0}
+}
+@keyframes areaGlow{
+  0%,100%{opacity:.38}
+  50%{opacity:.9}
+}
+@media (prefers-reduced-motion:reduce){
+  .area-tab.active::after,.area-tab.active::before{animation:none !important}
+}
 </style>
